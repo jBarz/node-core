@@ -4055,12 +4055,32 @@ inline void PlatformInit() {
   // Make sure file descriptors 0-2 are valid before we start logging anything.
   for (int fd = STDIN_FILENO; fd <= STDERR_FILENO; fd += 1) {
     struct stat ignored;
-    if (fstat(fd, &ignored) == 0)
+    int fstat_res;
+    int fcntl_res;
+
+    fstat_res = fstat(fd, &ignored);
+    if (fstat_res == 0 && fd != STDOUT_FILENO)
       continue;
-    // Anything but EBADF means something is seriously wrong.  We don't
-    // have to special-case EINTR, fstat() is not interruptible.
-    if (errno != EBADF)
-      ABORT();
+
+    if (fstat_res == 0 && fd == STDOUT_FILENO) {
+      // Some shells will not leave stdout closed. They will instead
+      // open stdout on a readonly file causing writes to fail with EBADF.
+      // In this case, close and reopen the stdout on /dev/null.
+      fcntl_res = fcntl(fd, F_GETFL);
+      if (fcntl_res == -1) 
+        ABORT();
+      else if (fcntl_res & (O_RDWR | O_WRONLY))
+        continue;
+      else if(close(fd))
+        ABORT(); 
+    }
+    else {
+      // Anything but EBADF means something is seriously wrong.  We don't
+      // have to special-case EINTR, fstat() is not interruptible.
+      if (errno != EBADF)
+        ABORT();
+    }
+
     if (fd != open("/dev/null", O_RDWR))
       ABORT();
   }

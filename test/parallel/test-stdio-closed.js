@@ -32,5 +32,5 @@ const cmd = `"${process.execPath}" "${__filename}" child 1>&- 2>&-`;
 const proc = spawn('/bin/sh', ['-c', cmd], { stdio: 'inherit' });
 
 proc.on('exit', common.mustCall(function(exitCode) {
-  assert.strictEqual(exitCode, common.isAix ? 126 : 42);
+  assert.strictEqual(exitCode, 42);
 }));
