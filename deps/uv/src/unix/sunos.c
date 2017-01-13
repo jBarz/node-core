@@ -306,7 +306,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
 update_timeout:
     assert(timeout > 0);
 
-    diff = loop->time - base;
+    diff = (loop->time - base) / 1e6;
     if (diff >= (uint64_t) timeout)
       return;
 

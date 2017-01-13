@@ -71,8 +71,8 @@ int uv_timer_start(uv_timer_t* handle,
   if (uv__is_active(handle))
     uv_timer_stop(handle);
 
-  clamped_timeout = handle->loop->time + timeout;
-  if (clamped_timeout < timeout)
+  clamped_timeout = handle->loop->time + (timeout * 1e6);
+  if (clamped_timeout < (timeout * 1e6))
     clamped_timeout = (uint64_t) -1;
 
   handle->timer_cb = cb;
@@ -143,7 +143,7 @@ int uv__next_timeout(const uv_loop_t* loop) {
   if (diff > INT_MAX)
     diff = INT_MAX;
 
-  return diff;
+  return diff / 1e6;
 }
 
 
